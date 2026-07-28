@@ -2,6 +2,7 @@ lnb-service/
 plan/
 CLAUDE.md
 .DS_Store
+.idea/
 
 # Go
 /backend/bin/
