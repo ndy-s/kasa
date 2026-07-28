@@ -1,0 +1,21 @@
+lnb-service/
+plan/
+CLAUDE.md
+.DS_Store
+
+# Go
+/backend/bin/
+/backend/tmp/
+*.test
+*.out
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# Node / web
+/web/node_modules/
+/web/.next/
+/web/dist/
+
