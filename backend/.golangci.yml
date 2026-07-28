@@ -1,0 +1,21 @@
+version: "2"
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - unused
+    - depguard
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - "$all"
+          deny: 
+            - pkg: "gorm.io/gorm"
+              desc: "no ORM in this project, use pgx/sqlc directly (see plan ADR-004)"
+          # TODO: as domain packages appear (starting W1-D3's customer/),
+          # add rules here so domain code cannot import net/http, pgx, or chi -
+          # only adapter files (http.go, repo_pg.go) may. See plan/04-project-structure.md.
+
