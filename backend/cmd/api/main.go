@@ -29,6 +29,8 @@ func main() {
 	}
 	defer pool.Close()
 
+	queries := postgres.New(pool)
+
 	r := chi.NewRouter()
 
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +41,14 @@ func main() {
 			}
 			return
 		}
+
+		count, err := queries.CountPings(r.Context())
+		if err != nil {
+			log.Println("count pings failed: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Println("ping count:", count)
 
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write([]byte("ok")); err != nil {
