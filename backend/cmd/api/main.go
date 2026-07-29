@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/ndy-s/kasa/backend/internal/platform/config"
+	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
 )
 
 func main() {
@@ -21,11 +23,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	pool, err := postgres.NewPool(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+
 	r := chi.NewRouter()
 
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+		if err := pool.Ping(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			if _, err := w.Write([]byte("db unreachable")); err != nil {
+				log.Println("write failed: ", err)
+			}
+			return
+		}
 
+		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write([]byte("ok")); err != nil {
 			log.Println("write failed: ", err)
 		}
