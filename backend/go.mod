@@ -2,4 +2,7 @@ module github.com/ndy-s/kasa/backend
 
 go 1.26.5
 
-require github.com/go-chi/chi/v5 v5.3.1 // indirect
+require (
+	github.com/go-chi/chi/v5 v5.3.1
+	github.com/joho/godotenv v1.5.1
+)
