@@ -1,0 +1,40 @@
+package customer
+
+import (
+	"errors"
+	"regexp"
+)
+
+type Status string
+
+const (
+	StatusPending   Status = "pending"
+	StatusActive    Status = "active"
+	StatusSuspended Status = "suspended"
+)
+
+type Customer struct {
+	ID     string
+	Name   string
+	Email  string
+	Status Status
+}
+
+var ErrInvalidEmail = errors.New("invalid email")
+
+func NewCustomer(name, email string) (*Customer, error) {
+	if !isValidEmail(email) {
+		return nil, ErrInvalidEmail
+	}
+
+	return &Customer{
+		Name:   name,
+		Email:  email,
+		Status: StatusPending,
+	}, nil
+}
+
+func isValidEmail(email string) bool {
+	var emailRe = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+	return emailRe.MatchString(email)
+}
