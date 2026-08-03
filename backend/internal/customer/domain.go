@@ -22,9 +22,9 @@ type Customer struct {
 }
 
 var (
-	ErrInvalidEmail = errors.New("invalid email")
+	ErrInvalidEmail     = errors.New("invalid email")
 	ErrCustomerNotFound = errors.New("customer not found")
-	ErrEmailTaken = errors.New("email already taken")
+	ErrEmailTaken       = errors.New("email already taken")
 )
 
 type Repository interface {

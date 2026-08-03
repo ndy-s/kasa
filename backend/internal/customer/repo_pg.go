@@ -12,6 +12,8 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
 )
 
+var _ Repository = (*PgRepository)(nil)
+
 type PgRepository struct {
 	q *postgres.Queries
 }
@@ -22,7 +24,7 @@ func NewPgRepository(q *postgres.Queries) *PgRepository {
 
 func (r *PgRepository) Create(ctx context.Context, c *Customer) (*Customer, error) {
 	row, err := r.q.CreateCustomer(ctx, postgres.CreateCustomerParams{
-		Name: c.Name,
+		Name:  c.Name,
 		Email: c.Email,
 	})
 	if err != nil {
@@ -35,7 +37,7 @@ func (r *PgRepository) Create(ctx context.Context, c *Customer) (*Customer, erro
 	return toDomain(row), nil
 }
 
-func (r *PgRepository) GetById(ctx context.Context, id string) (*Customer, error) {
+func (r *PgRepository) GetByID(ctx context.Context, id string) (*Customer, error) {
 	parsed, err := uuid.Parse(id)
 	if err != nil {
 		return nil, ErrCustomerNotFound
@@ -64,9 +66,9 @@ func (r *PgRepository) GetByEmail(ctx context.Context, email string) (*Customer,
 
 func toDomain(row postgres.Customer) *Customer {
 	return &Customer{
-		ID: uuid.UUID(row.ID.Bytes).String(),
-		Name: row.Name,
-		Email: row.Email,
+		ID:     uuid.UUID(row.ID.Bytes).String(),
+		Name:   row.Name,
+		Email:  row.Email,
 		Status: Status(row.Status),
 	}
 }
