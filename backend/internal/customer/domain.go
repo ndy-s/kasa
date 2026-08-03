@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"context"
 	"errors"
 	"regexp"
 )
@@ -20,7 +21,17 @@ type Customer struct {
 	Status Status
 }
 
-var ErrInvalidEmail = errors.New("invalid email")
+var (
+	ErrInvalidEmail = errors.New("invalid email")
+	ErrCustomerNotFound = errors.New("customer not found")
+	ErrEmailTaken = errors.New("email already taken")
+)
+
+type Repository interface {
+	Create(ctx context.Context, c *Customer) (*Customer, error)
+	GetByID(ctx context.Context, id string) (*Customer, error)
+	GetByEmail(ctx context.Context, email string) (*Customer, error)
+}
 
 func NewCustomer(name, email string) (*Customer, error) {
 	if !isValidEmail(email) {

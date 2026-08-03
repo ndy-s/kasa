@@ -4,6 +4,21 @@
 
 package postgres
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type Customer struct {
+	ID        pgtype.UUID
+	Name      string
+	Email     string
+	Phone     pgtype.Text
+	Status    string
+	KycStatus string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
 type Ping struct {
 	ID int32
 }
