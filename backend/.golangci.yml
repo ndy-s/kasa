@@ -12,10 +12,17 @@ linters:
         main:
           files:
             - "$all"
-          deny: 
+          deny:
             - pkg: "gorm.io/gorm"
               desc: "no ORM in this project, use pgx/sqlc directly (see plan ADR-004)"
-          # TODO: as domain packages appear (starting W1-D3's customer/),
-          # add rules here so domain code cannot import net/http, pgx, or chi -
-          # only adapter files (http.go, repo_pg.go) may. See plan/04-project-structure.md.
-
+        domain:
+          files:
+            - "**/internal/customer/domain.go"
+            - "**/internal/customer/service.go"
+          deny: 
+            - pkg: "github.com/jackc/pgx"
+              desc: "domain/application code must not import pgx; go through the Repository port"
+            - pkg: "net/http"
+              desc: "domain/application code must not import net/http; that belongs in http.go"
+            - pkg: "github.com/go-chi/chi"
+              desc: "domain/application code must not import chi"
