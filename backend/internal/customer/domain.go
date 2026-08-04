@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 )
 
 type Status string
@@ -34,13 +35,14 @@ type Repository interface {
 }
 
 func NewCustomer(name, email string) (*Customer, error) {
-	if !isValidEmail(email) {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if !isValidEmail(normalized) {
 		return nil, ErrInvalidEmail
 	}
 
 	return &Customer{
 		Name:   name,
-		Email:  email,
+		Email:  normalized,
 		Status: StatusPending,
 	}, nil
 }
