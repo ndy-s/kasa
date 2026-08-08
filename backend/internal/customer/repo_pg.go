@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
 )
@@ -15,11 +16,12 @@ import (
 var _ Repository = (*PgRepository)(nil)
 
 type PgRepository struct {
-	q *postgres.Queries
+	pool *pgxpool.Pool
+	q    *postgres.Queries
 }
 
-func NewPgRepository(q *postgres.Queries) *PgRepository {
-	return &PgRepository{q: q}
+func NewPgRepository(pool *pgxpool.Pool) *PgRepository {
+	return &PgRepository{pool: pool, q: postgres.New(pool)}
 }
 
 func (r *PgRepository) Create(ctx context.Context, c *Customer) (*Customer, error) {
@@ -28,10 +30,33 @@ func (r *PgRepository) Create(ctx context.Context, c *Customer) (*Customer, erro
 		Email: c.Email,
 	})
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return nil, ErrEmailTaken
-		}
+		return nil, mapCreateError(err)
+	}
+	return toDomain(row), nil
+}
+
+func (r *PgRepository) CreateWithCredential(ctx context.Context, c *Customer, passwordHash string) (*Customer, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx) // no-op after a successful commit
+
+	qtx := r.q.WithTx(tx)
+
+	row, err := qtx.CreateCustomer(ctx, postgres.CreateCustomerParams{Name: c.Name, Email: c.Email})
+	if err != nil {
+		return nil, mapCreateError(err)
+	}
+
+	if err := qtx.CreateCredential(ctx, postgres.CreateCredentialParams{
+		CustomerID:   row.ID,
+		PasswordHash: passwordHash,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return toDomain(row), nil
@@ -61,7 +86,17 @@ func (r *PgRepository) GetByEmail(ctx context.Context, email string) (*Customer,
 		return nil, err
 	}
 	return toDomain(row), nil
+}
 
+func (r *PgRepository) GetCredentialByEmail(ctx context.Context, email string) (string, string, error) {
+	row, err := r.q.GetCredentialByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", "", ErrInvalidCredentials
+		}
+		return "", "", err
+	}
+	return uuid.UUID(row.ID.Bytes).String(), row.PasswordHash, nil
 }
 
 func toDomain(row postgres.Customer) *Customer {
@@ -71,4 +106,12 @@ func toDomain(row postgres.Customer) *Customer {
 		Email:  row.Email,
 		Status: Status(row.Status),
 	}
+}
+
+func mapCreateError(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return ErrEmailTaken
+	}
+	return err
 }

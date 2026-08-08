@@ -23,15 +23,18 @@ type Customer struct {
 }
 
 var (
-	ErrInvalidEmail     = errors.New("invalid email")
-	ErrCustomerNotFound = errors.New("customer not found")
-	ErrEmailTaken       = errors.New("email already taken")
+	ErrInvalidEmail       = errors.New("invalid email")
+	ErrCustomerNotFound   = errors.New("customer not found")
+	ErrEmailTaken         = errors.New("email already taken")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 type Repository interface {
 	Create(ctx context.Context, c *Customer) (*Customer, error)
+	CreateWithCredential(ctx context.Context, c *Customer, passwordHash string) (*Customer, error)
 	GetByID(ctx context.Context, id string) (*Customer, error)
 	GetByEmail(ctx context.Context, email string) (*Customer, error)
+	GetCredentialByEmail(ctx context.Context, email string) (customerID, passwordHash string, err error)
 }
 
 func NewCustomer(name, email string) (*Customer, error) {
