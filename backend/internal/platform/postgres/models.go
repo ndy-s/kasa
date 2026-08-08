@@ -8,6 +8,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Credential struct {
+	CustomerID   pgtype.UUID
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
+}
+
 type Customer struct {
 	ID        pgtype.UUID
 	Name      string

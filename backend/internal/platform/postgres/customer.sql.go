@@ -11,6 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createCredential = `-- name: CreateCredential :exec
+INSERT INTO credentials (customer_id, password_hash)
+VALUES ($1, $2)
+`
+
+type CreateCredentialParams struct {
+	CustomerID   pgtype.UUID
+	PasswordHash string
+}
+
+func (q *Queries) CreateCredential(ctx context.Context, arg CreateCredentialParams) error {
+	_, err := q.db.Exec(ctx, createCredential, arg.CustomerID, arg.PasswordHash)
+	return err
+}
+
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers (name, email)
 VALUES ($1, $2)
@@ -35,6 +50,25 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
+	return i, err
+}
+
+const getCredentialByEmail = `-- name: GetCredentialByEmail :one
+SELECT c.id, cr.password_hash
+FROM customers c
+JOIN credentials cr ON cr.customer_id = c.id
+WHERE c.email = $1
+`
+
+type GetCredentialByEmailRow struct {
+	ID           pgtype.UUID
+	PasswordHash string
+}
+
+func (q *Queries) GetCredentialByEmail(ctx context.Context, email string) (GetCredentialByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getCredentialByEmail, email)
+	var i GetCredentialByEmailRow
+	err := row.Scan(&i.ID, &i.PasswordHash)
 	return i, err
 }
 
