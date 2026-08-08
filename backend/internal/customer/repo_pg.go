@@ -40,7 +40,7 @@ func (r *PgRepository) CreateWithCredential(ctx context.Context, c *Customer, pa
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx) // no-op after a successful commit
+	defer func() { _ = tx.Rollback(ctx) }() // no-op after a successful commit
 
 	qtx := r.q.WithTx(tx)
 
