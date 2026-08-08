@@ -1,4 +1,4 @@
-.PHONY: run test lint tidy migrate
+.PHONY: run test lint tidy migrate fmt
 
 run:
 	cd backend && go run ./cmd/api
@@ -8,6 +8,9 @@ test:
 
 lint:
 	cd backend && golangci-lint run
+
+fmt:
+	cd backend && go fmt ./...
 
 tidy:
 	cd backend && go mod tidy
