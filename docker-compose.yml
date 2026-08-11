@@ -10,5 +10,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  api:
+    build: ./backend
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://kasa:kasa@postgres:5432/kasa?sslmode=disable
+      JWT_SECRET: change-me
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
 volumes:
-  pgdata: 
+  pgdata:
