@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Account struct {
+	ID              pgtype.UUID
+	CustomerID      pgtype.UUID
+	ProductID       pgtype.UUID
+	Currency        string
+	Status          string
+	LedgerAccountID pgtype.UUID
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
 type ChartOfAccount struct {
 	ID       pgtype.UUID
 	Code     string
@@ -56,4 +67,16 @@ type JournalLine struct {
 
 type Ping struct {
 	ID int32
+}
+
+type Product struct {
+	ID              pgtype.UUID
+	Code            string
+	Name            string
+	Kind            string
+	Currency        string
+	InterestRateBps int32
+	Config          []byte
+	Active          bool
+	CreatedAt       pgtype.Timestamptz
 }

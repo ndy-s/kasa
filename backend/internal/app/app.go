@@ -7,15 +7,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/ndy-s/kasa/backend/internal/account"
 	"github.com/ndy-s/kasa/backend/internal/customer"
 	"github.com/ndy-s/kasa/backend/internal/platform/auth"
 	"github.com/ndy-s/kasa/backend/internal/platform/web"
 )
 
 func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
-	repo := customer.NewPgRepository(pool)
-	svc := customer.NewService(repo, issuer)
-	handler := customer.NewHandler(svc)
+	custHandler := customer.NewHandler(customer.NewService(customer.NewPgRepository(pool), issuer))
+	accHandler := account.NewHandler(account.NewService(pool))
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -24,7 +24,9 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 
 	r.Get("/healthz", healthz(pool))
 	web.MountDocs(r)
-	handler.Mount(r, web.AuthGuard(issuer))
+	guard := web.AuthGuard(issuer)
+	custHandler.Mount(r, guard)
+	accHandler.Mount(r, guard)
 	return r
 }
 

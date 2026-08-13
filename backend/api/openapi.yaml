@@ -69,6 +69,44 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Customer" }
         "401": { $ref: "#/components/responses/Error" }
+  /accounts:
+    post:
+      summary: Open an account against a product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_code]
+              properties:
+                product_code: { type: string, example: SAV }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "401": { $ref: "#/components/responses/Error" }
+  /accounts/{id}:
+    get:
+      summary: Get an account by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "404": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:
@@ -83,6 +121,12 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         status: { type: string, enum: [pending, active, suspended] }
+    Account:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [pending, active, frozen, closed] }
+        currency: { type: string, example: USD }
     Error:
       type: object
       properties:
