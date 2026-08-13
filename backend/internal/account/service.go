@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
+	"github.com/ndy-s/kasa/backend/internal/shared/money"
 )
 
 var ErrAccountNotFound = errors.New("account not found")
@@ -79,6 +80,29 @@ func (s *Service) Get(ctx context.Context, id string) (*Account, error) {
 		return nil, ErrAccountNotFound
 	}
 	return toDomain(row), nil
+}
+
+// Balance returns the ledger-derived balance of the account as Money.
+func (s *Service) Balance(ctx context.Context, id string) (money.Money, error) {
+	acc, err := s.Get(ctx, id)
+	if err != nil {
+		return money.Money{}, err
+	}
+
+	glID, err := uuid.Parse(acc.LedgerAccountID)
+	if err != nil {
+		return money.Money{}, err
+	}
+	raw, err := s.q.LedgerBalance(ctx, pgtype.UUID{Bytes: glID, Valid: true})
+	if err != nil {
+		return money.Money{}, err
+	}
+
+	cur, err := money.ForCode(acc.Currency)
+	if err != nil {
+		return money.Money{}, err
+	}
+	return money.FromMinor(raw, cur), nil
 }
 
 func (s *Service) Close(ctx context.Context, id string) error {

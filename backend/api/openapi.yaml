@@ -107,6 +107,26 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Account" }
         "404": { $ref: "#/components/responses/Error" }
+  /accounts/{id}/balances:
+    get:
+      summary: The account's ledger-derived balance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ledger: { type: string, example: "500.00 USD" }
+        "404": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:

@@ -32,6 +32,18 @@ func FromMinor(amount int64, c Currency) Money {
 	return Money{amount: amount, currency: c}
 }
 
+// ForCode returns the Currency for a currency code.
+func ForCode(code string) (Currency, error) {
+	switch code {
+	case "USD":
+		return USD, nil
+	case "SGD":
+		return SGD, nil
+	default:
+		return Currency{}, fmt.Errorf("%w: unknown currency %q", ErrInvalidAmount, code)
+	}
+}
+
 // Parse reads a decimal string such as "123.45" into Money, using the currency's exponent.
 func Parse(s string, c Currency) (Money, error) {
 	s = strings.TrimSpace(s)

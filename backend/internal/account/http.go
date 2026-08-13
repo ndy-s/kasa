@@ -21,6 +21,7 @@ func (h *Handler) Mount(r chi.Router, guard func(http.Handler) http.Handler) {
 		r.Use(guard)
 		r.Post("/accounts", h.open)
 		r.Get("/accounts/{id}", h.get)
+		r.Get("/accounts/{id}/balances", h.balances)
 	})
 }
 
@@ -65,4 +66,29 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	web.JSON(w, http.StatusOK, toResponse(acc))
+}
+
+type balancesResponse struct {
+	Ledger string `json:"ledger"`
+}
+
+func (h *Handler) balances(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	acc, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		web.Error(w, r, apperr.NotFound("account not found"))
+		return
+	}
+	if customerID, _ := web.CustomerID(r.Context()); acc.CustomerID != customerID {
+		web.Error(w, r, apperr.NotFound("account not found"))
+		return
+	}
+
+	bal, err := h.svc.Balance(r.Context(), id)
+	if err != nil {
+		web.Error(w, r, err)
+		return
+	}
+	web.JSON(w, http.StatusOK, balancesResponse{Ledger: bal.String()})
 }
