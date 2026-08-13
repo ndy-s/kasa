@@ -8,6 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ChartOfAccount struct {
+	ID       pgtype.UUID
+	Code     string
+	Name     string
+	Type     string
+	Currency string
+}
+
 type Credential struct {
 	CustomerID   pgtype.UUID
 	PasswordHash string
@@ -23,6 +31,27 @@ type Customer struct {
 	KycStatus string
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+}
+
+type JournalEntry struct {
+	ID              pgtype.UUID
+	TransactionType string
+	Description     string
+	IdempotencyKey  pgtype.Text
+	BookingDate     pgtype.Date
+	ValueDate       pgtype.Date
+	ReferenceNo     pgtype.Text
+	ReversesEntryID pgtype.UUID
+	CreatedAt       pgtype.Timestamptz
+}
+
+type JournalLine struct {
+	ID              pgtype.UUID
+	JournalEntryID  pgtype.UUID
+	LedgerAccountID pgtype.UUID
+	Direction       string
+	AmountMinor     int64
+	Currency        string
 }
 
 type Ping struct {
