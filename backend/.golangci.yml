@@ -19,7 +19,8 @@ linters:
           files:
             - "**/internal/customer/domain.go"
             - "**/internal/customer/service.go"
-          deny: 
+            - "**/internal/ledger/domain.go"
+          deny:
             - pkg: "github.com/jackc/pgx"
               desc: "domain/application code must not import pgx; go through the Repository port"
             - pkg: "net/http"
