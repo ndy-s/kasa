@@ -9,13 +9,17 @@ import (
 
 	"github.com/ndy-s/kasa/backend/internal/account"
 	"github.com/ndy-s/kasa/backend/internal/customer"
+	"github.com/ndy-s/kasa/backend/internal/deposit"
+	"github.com/ndy-s/kasa/backend/internal/ledger"
 	"github.com/ndy-s/kasa/backend/internal/platform/auth"
 	"github.com/ndy-s/kasa/backend/internal/platform/web"
 )
 
 func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
+	ledgerSvc := ledger.NewService()
 	custHandler := customer.NewHandler(customer.NewService(customer.NewPgRepository(pool), issuer))
 	accHandler := account.NewHandler(account.NewService(pool))
+	depHandler := deposit.NewHandler(deposit.NewService(pool, ledgerSvc))
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -27,6 +31,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	guard := web.AuthGuard(issuer)
 	custHandler.Mount(r, guard)
 	accHandler.Mount(r, guard)
+	depHandler.Mount(r, guard)
 	return r
 }
 
