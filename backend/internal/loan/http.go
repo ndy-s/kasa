@@ -18,9 +18,10 @@ type Handler struct {
 
 func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 
-func (h *Handler) Mount(r chi.Router, guard func(http.Handler) http.Handler) {
+func (h *Handler) Mount(r chi.Router, guard, rateLimit func(http.Handler) http.Handler) {
 	r.Group(func(r chi.Router) {
 		r.Use(guard)
+		r.Use(rateLimit)
 		r.Post("/loans", h.originate)
 		r.Get("/loans/{id}", h.get)
 		r.Get("/loans/{id}/schedule", h.schedule)
@@ -70,7 +71,7 @@ func (h *Handler) originate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	principal, err := money.Parse(req.Principal, money.IDR)
-	if err != nil || principal.IsZero() || principal.IsNegative() {
+	if err != nil || !principal.IsPositive() {
 		web.Error(w, r, apperr.Invalid("invalid principal"))
 		return
 	}
@@ -85,6 +86,10 @@ func (h *Handler) originate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	web.Audit(r.Context(), "money.loan_disbursement",
+		"actor", customerID, "loan", l.ID, "deposit_account", l.DepositAccountID, "principal", l.PrincipalMinor)
+
 	web.JSON(w, http.StatusCreated, toResponse(l))
 }
 
@@ -157,5 +162,8 @@ func (h *Handler) repay(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	web.Audit(r.Context(), "money.loan_repayment", "actor", customerID, "loan", chi.URLParam(r, "id"), "entry_id", entryID)
+
 	web.JSON(w, http.StatusCreated, map[string]string{"entry_id": entryID})
 }

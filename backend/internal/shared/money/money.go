@@ -91,6 +91,7 @@ func (m Money) Amount() int64      { return m.amount }
 func (m Money) Currency() Currency { return m.currency }
 func (m Money) IsZero() bool       { return m.amount == 0 }
 func (m Money) IsNegative() bool   { return m.amount < 0 }
+func (m Money) IsPositive() bool   { return m.amount > 0 }
 
 func (m Money) Add(o Money) (Money, error) {
 	if m.currency != o.currency {

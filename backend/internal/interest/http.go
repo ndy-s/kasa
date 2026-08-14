@@ -13,17 +13,19 @@ import (
 )
 
 type AdminHandler struct {
-	svc   *Service
-	clock *clock.Fake
+	svc        *Service
+	clock      *clock.Fake
+	adminToken string
 }
 
-func NewAdminHandler(svc *Service, fake *clock.Fake) *AdminHandler {
-	return &AdminHandler{svc: svc, clock: fake}
+func NewAdminHandler(svc *Service, fake *clock.Fake, adminToken string) *AdminHandler {
+	return &AdminHandler{svc: svc, clock: fake, adminToken: adminToken}
 }
 
 func (h *AdminHandler) Mount(r chi.Router, guard func(http.Handler) http.Handler) {
 	r.Group(func(r chi.Router) {
 		r.Use(guard)
+		r.Use(web.AdminGuard(h.adminToken))
 		r.Post("/admin/clock/advance", h.advance)
 		r.Post("/admin/interest/capitalize", h.capitalize)
 	})

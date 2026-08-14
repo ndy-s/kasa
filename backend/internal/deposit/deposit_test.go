@@ -60,6 +60,44 @@ func TestWithdrawRejectsOverdraft(t *testing.T) {
 	}
 }
 
+// A negative "deposit" would debit the account by the sign-flipped amount, acting as an unchecked
+// withdrawal that bypasses the overdraft check ErrInvalidAmount closes off.
+func TestDepositRejectsNegativeAmount(t *testing.T) {
+	ctx := context.Background()
+	pool := startPostgres(t, ctx)
+
+	custSvc := customer.NewService(customer.NewPgRepository(pool), auth.NewTokenIssuer("test-secret", time.Hour))
+	cust, err := custSvc.Register(ctx, "Negative Amount Test", "negative@example.com", "s3cret-password")
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	accSvc := account.NewService(pool)
+	acc, err := accSvc.OpenAccount(ctx, cust.ID, "SAV")
+	if err != nil {
+		t.Fatalf("open account: %v", err)
+	}
+
+	depSvc := deposit.NewService(pool, ledger.NewService())
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(10000, money.IDR)); err != nil {
+		t.Fatalf("deposit: %v", err)
+	}
+
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(-5000, money.IDR)); !errors.Is(err, deposit.ErrInvalidAmount) {
+		t.Fatalf("negative deposit: got %v, want ErrInvalidAmount", err)
+	}
+	if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(-5000, money.IDR)); !errors.Is(err, deposit.ErrInvalidAmount) {
+		t.Fatalf("negative withdraw: got %v, want ErrInvalidAmount", err)
+	}
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(0, money.IDR)); !errors.Is(err, deposit.ErrInvalidAmount) {
+		t.Fatalf("zero deposit: got %v, want ErrInvalidAmount", err)
+	}
+
+	if balance := balanceOf(t, ctx, pool, acc.LedgerAccountID); balance != 10000 {
+		t.Fatalf("balance after rejected non-positive amounts = %d, want 10000 (nothing posted)", balance)
+	}
+}
+
 func balanceOf(t *testing.T, ctx context.Context, pool *pgxpool.Pool, ledgerAccountID string) int64 {
 	t.Helper()
 	var balance int64

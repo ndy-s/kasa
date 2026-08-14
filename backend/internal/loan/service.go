@@ -19,6 +19,7 @@ var (
 	ErrDepositNotActive  = errors.New("deposit account is not active")
 	ErrNoInstallmentDue  = errors.New("loan has no installment due")
 	ErrInsufficientFunds = errors.New("insufficient funds")
+	ErrInvalidPrincipal  = errors.New("principal must be positive")
 )
 
 type Service struct {
@@ -37,6 +38,9 @@ func (s *Service) Originate(
 	ctx context.Context, customerID, productCode, depositAccountID string,
 	principal money.Money, termMonths int,
 ) (*Loan, error) {
+	if !principal.IsPositive() {
+		return nil, ErrInvalidPrincipal
+	}
 	custID, err := uuid.Parse(customerID)
 	if err != nil {
 		return nil, err

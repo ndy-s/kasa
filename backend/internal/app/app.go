@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ndy-s/kasa/backend/internal/account"
@@ -24,7 +25,13 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/transfer"
 )
 
-func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
+// Config holds the per-environment settings NewRouter needs beyond the pool and token issuer.
+type Config struct {
+	AllowedOrigin string // the web app's origin, for CORS
+	AdminToken    string // required header value for the learn-mode admin routes
+}
+
+func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer, cfg Config) http.Handler {
 	ledgerSvc := ledger.NewService()
 	q := postgres.New(pool)
 	custHandler := customer.NewHandler(customer.NewService(customer.NewPgRepository(pool), issuer))
@@ -39,26 +46,38 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	loanHandler := loan.NewHandler(loan.NewService(pool, ledgerSvc))
 
 	fakeClock := clock.NewFake(time.Now())
-	intHandler := interest.NewAdminHandler(interest.NewService(pool, ledgerSvc), fakeClock)
+	intHandler := interest.NewAdminHandler(interest.NewService(pool, ledgerSvc), fakeClock, cfg.AdminToken)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
+	// deliberately no RealIP: chi's middleware.RealIP trusts client-supplied X-Forwarded-For/X-Real-IP
+	// unconditionally, which lets a client spoof its rate-limit identity (GHSA-3fxj-6jh8-hvhx); the rate
+	// limiter below keys on the raw TCP peer address instead.
 	r.Use(web.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(web.CORS)
+	r.Use(web.SecurityHeaders)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{cfg.AllowedOrigin},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "Idempotency-Key", "X-Admin-Token"},
+		AllowCredentials: false,
+	}))
+
+	authLimit := web.RateLimit(1, 5)   // register/login: tight, brute-force resistant
+	moneyLimit := web.RateLimit(5, 10) // deposit/withdraw/transfer/loans
 
 	r.Get("/healthz", healthz(pool))
 	web.MountDocs(r)
 	guard := web.AuthGuard(issuer)
-	custHandler.Mount(r, guard)
+	custHandler.Mount(r, guard, authLimit)
 	accHandler.Mount(r, guard)
-	depHandler.Mount(r, guard)
-	xferHandler.Mount(r, guard, web.Idempotency(pool))
+	depHandler.Mount(r, guard, moneyLimit)
+	xferHandler.Mount(r, guard, web.Idempotency(pool), moneyLimit)
 	histHandler.Mount(r, guard)
 	stmtHandler.Mount(r, guard)
 	intHandler.Mount(r, guard)
 	eduHandler.Mount(r, guard)
-	loanHandler.Mount(r, guard)
+	loanHandler.Mount(r, guard, moneyLimit)
 	return r
 }
 

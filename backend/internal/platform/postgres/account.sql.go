@@ -93,19 +93,23 @@ func (q *Queries) GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, 
 }
 
 const getProductByCode = `-- name: GetProductByCode :one
-SELECT id, code, currency FROM product WHERE code = $1
+SELECT id, code, name, kind, currency, interest_rate_bps, config, active, created_at FROM product WHERE code = $1
 `
 
-type GetProductByCodeRow struct {
-	ID       pgtype.UUID
-	Code     string
-	Currency string
-}
-
-func (q *Queries) GetProductByCode(ctx context.Context, code string) (GetProductByCodeRow, error) {
+func (q *Queries) GetProductByCode(ctx context.Context, code string) (Product, error) {
 	row := q.db.QueryRow(ctx, getProductByCode, code)
-	var i GetProductByCodeRow
-	err := row.Scan(&i.ID, &i.Code, &i.Currency)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.Kind,
+		&i.Currency,
+		&i.InterestRateBps,
+		&i.Config,
+		&i.Active,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 

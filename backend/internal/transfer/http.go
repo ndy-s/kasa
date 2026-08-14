@@ -18,9 +18,10 @@ type Handler struct {
 
 func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 
-func (h *Handler) Mount(r chi.Router, guard func(http.Handler) http.Handler, idempotency func(http.Handler) http.Handler) {
+func (h *Handler) Mount(r chi.Router, guard, idempotency, rateLimit func(http.Handler) http.Handler) {
 	r.Group(func(r chi.Router) {
 		r.Use(guard)
+		r.Use(rateLimit)
 		r.Use(idempotency)
 		r.Post("/transfers", h.transfer)
 	})
@@ -39,8 +40,8 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	amount, err := money.Parse(req.Amount, money.IDR)
-	if err != nil {
-		web.Error(w, r, apperr.Invalid("invalid amount"))
+	if err != nil || !amount.IsPositive() {
+		web.Error(w, r, apperr.Invalid("amount must be a positive number"))
 		return
 	}
 
@@ -52,10 +53,16 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 			web.Error(w, r, apperr.New("INSUFFICIENT_FUNDS", http.StatusUnprocessableEntity, "insufficient funds"))
 		case errors.Is(err, ErrSameAccount):
 			web.Error(w, r, apperr.Invalid("cannot transfer to the same account"))
+		case errors.Is(err, ErrInvalidAmount):
+			web.Error(w, r, apperr.Invalid("amount must be a positive number"))
 		default:
 			web.Error(w, r, err)
 		}
 		return
 	}
+
+	web.Audit(r.Context(), "money.transfer",
+		"actor", actor, "from", req.FromAccountID, "to", req.ToAccountID, "amount", amount.String(), "entry_id", entryID)
+
 	web.JSON(w, http.StatusCreated, map[string]string{"entry_id": entryID})
 }

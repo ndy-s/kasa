@@ -18,6 +18,7 @@ import (
 var (
 	ErrInsufficientFunds = errors.New("insufficient funds")
 	ErrAccountNotActive  = errors.New("account is not active")
+	ErrInvalidAmount     = errors.New("amount must be positive")
 )
 
 type Service struct {
@@ -41,6 +42,9 @@ func (s *Service) move(
 	ctx context.Context, actor, accountID string, amount money.Money,
 	txType ledger.TransactionType, checkFunds bool,
 ) (string, error) {
+	if !amount.IsPositive() {
+		return "", ErrInvalidAmount
+	}
 	aid, err := uuid.Parse(accountID)
 	if err != nil {
 		return "", err

@@ -18,4 +18,4 @@ SELECT * FROM accounts WHERE customer_id = $1 ORDER BY created_at;
 UPDATE accounts SET status = $2, updated_at = now() WHERE id = $1;
 
 -- name: GetProductByCode :one
-SELECT id, code, currency FROM product WHERE code = $1;
+SELECT * FROM product WHERE code = $1;

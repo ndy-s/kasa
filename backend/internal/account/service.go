@@ -3,7 +3,6 @@ package account
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,6 +14,8 @@ import (
 
 var ErrAccountNotFound = errors.New("account not found")
 var ErrBalanceNotZero = errors.New("account balance must be zero to close")
+var ErrUnknownProduct = errors.New("unknown product code")
+var ErrLoanProductRequiresOrigination = errors.New("loan products must be opened via loan origination, not /accounts")
 
 type Service struct {
 	pool *pgxpool.Pool
@@ -29,7 +30,10 @@ func NewService(pool *pgxpool.Pool) *Service {
 func (s *Service) OpenAccount(ctx context.Context, customerID, productCode string) (*Account, error) {
 	product, err := s.q.GetProductByCode(ctx, productCode)
 	if err != nil {
-		return nil, fmt.Errorf("resolve product: %w", err)
+		return nil, ErrUnknownProduct
+	}
+	if product.Kind == "loan" {
+		return nil, ErrLoanProductRequiresOrigination
 	}
 	custID, err := uuid.Parse(customerID)
 	if err != nil {

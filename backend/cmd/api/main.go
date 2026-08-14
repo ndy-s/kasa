@@ -32,7 +32,7 @@ func main() {
 	defer pool.Close()
 
 	issuer := auth.NewTokenIssuer(cfg.JWTSecret, time.Hour)
-	r := app.NewRouter(pool, issuer)
+	r := app.NewRouter(pool, issuer, app.Config{AllowedOrigin: cfg.AllowedOrigin, AdminToken: cfg.AdminToken})
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Println("listening on", addr)

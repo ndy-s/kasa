@@ -62,7 +62,8 @@ func TestAccountBalanceIsDerivedFromTheLedger(t *testing.T) {
 	}
 	t.Cleanup(pool.Close)
 
-	srv := httptest.NewServer(app.NewRouter(pool, auth.NewTokenIssuer("test-secret", time.Hour)))
+	srv := httptest.NewServer(app.NewRouter(pool, auth.NewTokenIssuer("test-secret", time.Hour),
+		app.Config{AllowedOrigin: "*", AdminToken: "test-admin-token"}))
 	t.Cleanup(srv.Close)
 
 	// register and log in

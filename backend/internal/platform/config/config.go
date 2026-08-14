@@ -6,9 +6,11 @@ import (
 )
 
 type Config struct {
-	Port        string
-	DatabaseURL string
-	JWTSecret   string
+	Port          string
+	DatabaseURL   string
+	JWTSecret     string
+	AllowedOrigin string
+	AdminToken    string
 }
 
 func Load() (Config, error) {
@@ -31,6 +33,18 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("JWT_SECRET is required")
 	}
 	cfg.JWTSecret = secret
+
+	origin, exists := os.LookupEnv("ALLOWED_ORIGIN")
+	if !exists || origin == "" {
+		origin = "http://localhost:5173" // the web app's Vite dev server
+	}
+	cfg.AllowedOrigin = origin
+
+	adminToken, exists := os.LookupEnv("ADMIN_TOKEN")
+	if !exists || adminToken == "" {
+		return Config{}, fmt.Errorf("ADMIN_TOKEN is required")
+	}
+	cfg.AdminToken = adminToken
 
 	return cfg, nil
 }

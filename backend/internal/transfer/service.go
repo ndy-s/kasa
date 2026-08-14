@@ -19,6 +19,7 @@ import (
 var (
 	ErrInsufficientFunds = errors.New("insufficient funds")
 	ErrSameAccount       = errors.New("cannot transfer to the same account")
+	ErrInvalidAmount     = errors.New("amount must be positive")
 )
 
 type Service struct {
@@ -31,6 +32,9 @@ func NewService(pool *pgxpool.Pool, ledgerSvc *ledger.Service) *Service {
 }
 
 func (s *Service) Transfer(ctx context.Context, actor, fromID, toID string, amount money.Money) (string, error) {
+	if !amount.IsPositive() {
+		return "", ErrInvalidAmount
+	}
 	if fromID == toID {
 		return "", ErrSameAccount
 	}

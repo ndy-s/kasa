@@ -15,3 +15,10 @@ WHERE journal_entry_id = $1;
 -- name: GetEntry :one
 SELECT id, transaction_type, description, booking_date
 FROM journal_entry WHERE id = $1;
+
+-- name: EntryTouchesCustomer :one
+SELECT EXISTS (
+  SELECT 1 FROM journal_line jl
+  JOIN accounts a ON a.ledger_account_id = jl.ledger_account_id
+  WHERE jl.journal_entry_id = $1 AND a.customer_id = $2
+) AS touches;

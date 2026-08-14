@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -48,7 +49,14 @@ func (h *Handler) open(w http.ResponseWriter, r *http.Request) {
 	}
 	acc, err := h.svc.OpenAccount(r.Context(), customerID, req.ProductCode)
 	if err != nil {
-		web.Error(w, r, err)
+		switch {
+		case errors.Is(err, ErrUnknownProduct):
+			web.Error(w, r, apperr.Invalid("unknown product code"))
+		case errors.Is(err, ErrLoanProductRequiresOrigination):
+			web.Error(w, r, apperr.Invalid(err.Error()))
+		default:
+			web.Error(w, r, err)
+		}
 		return
 	}
 	web.JSON(w, http.StatusCreated, toResponse(acc))

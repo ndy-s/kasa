@@ -19,9 +19,12 @@ func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) Mount(r chi.Router, guard func(http.Handler) http.Handler) {
-	r.Post("/register", h.register)
-	r.Post("/login", h.login)
+func (h *Handler) Mount(r chi.Router, guard, rateLimit func(http.Handler) http.Handler) {
+	r.Group(func(r chi.Router) {
+		r.Use(rateLimit)
+		r.Post("/register", h.register)
+		r.Post("/login", h.login)
+	})
 	r.Group(func(r chi.Router) {
 		r.Use(guard)
 		r.Get("/me", h.me)

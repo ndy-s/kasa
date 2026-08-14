@@ -52,6 +52,11 @@ func CustomerID(ctx context.Context) (string, bool) {
 	return id, ok
 }
 
+// Audit logs a completed money operation with its request id, for who/what/when traceability.
+func Audit(ctx context.Context, event string, args ...any) {
+	slog.Info(event, append([]any{"request_id", middleware.GetReqID(ctx)}, args...)...)
+}
+
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

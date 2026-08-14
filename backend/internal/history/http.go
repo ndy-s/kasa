@@ -124,6 +124,26 @@ func (h *Handler) journal(w http.ResponseWriter, r *http.Request) {
 		web.Error(w, r, apperr.NotFound("transaction not found"))
 		return
 	}
+
+	customerID, _ := web.CustomerID(r.Context())
+	custUUID, err := uuid.Parse(customerID)
+	if err != nil {
+		web.Error(w, r, apperr.NotFound("transaction not found"))
+		return
+	}
+	touches, err := h.q.EntryTouchesCustomer(r.Context(), postgres.EntryTouchesCustomerParams{
+		JournalEntryID: entryID,
+		CustomerID:     pgtype.UUID{Bytes: custUUID, Valid: true},
+	})
+	if err != nil {
+		web.Error(w, r, err)
+		return
+	}
+	if !touches {
+		web.Error(w, r, apperr.NotFound("transaction not found"))
+		return
+	}
+
 	rows, err := h.q.ListLinesByEntry(r.Context(), entryID)
 	if err != nil {
 		web.Error(w, r, err)
