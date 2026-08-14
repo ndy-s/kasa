@@ -82,27 +82,38 @@ func (s *Service) Get(ctx context.Context, id string) (*Account, error) {
 	return toDomain(row), nil
 }
 
-// Balance returns the ledger-derived balance of the account as Money.
-func (s *Service) Balance(ctx context.Context, id string) (money.Money, error) {
+// Balances returns the ledger balance, active holds, and available balance
+// (ledger minus holds), each as Money.
+func (s *Service) Balances(ctx context.Context, id string) (ledgerBal, holds, available money.Money, err error) {
 	acc, err := s.Get(ctx, id)
 	if err != nil {
-		return money.Money{}, err
+		return
 	}
-
 	glID, err := uuid.Parse(acc.LedgerAccountID)
 	if err != nil {
-		return money.Money{}, err
+		return
 	}
-	raw, err := s.q.LedgerBalance(ctx, pgtype.UUID{Bytes: glID, Valid: true})
+	aid, err := uuid.Parse(acc.ID)
 	if err != nil {
-		return money.Money{}, err
+		return
 	}
-
 	cur, err := money.ForCode(acc.Currency)
 	if err != nil {
-		return money.Money{}, err
+		return
 	}
-	return money.FromMinor(raw, cur), nil
+
+	rawLedger, err := s.q.LedgerBalance(ctx, pgtype.UUID{Bytes: glID, Valid: true})
+	if err != nil {
+		return
+	}
+	rawHolds, err := s.q.SumActiveHolds(ctx, pgtype.UUID{Bytes: aid, Valid: true})
+	if err != nil {
+		return
+	}
+	ledgerBal = money.FromMinor(rawLedger, cur)
+	holds = money.FromMinor(rawHolds, cur)
+	available = money.FromMinor(rawLedger-rawHolds, cur)
+	return
 }
 
 func (s *Service) Close(ctx context.Context, id string) error {

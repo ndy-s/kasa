@@ -69,7 +69,9 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 type balancesResponse struct {
-	Ledger string `json:"ledger"`
+	Ledger    string `json:"ledger"`
+	Holds     string `json:"holds"`
+	Available string `json:"available"`
 }
 
 func (h *Handler) balances(w http.ResponseWriter, r *http.Request) {
@@ -85,10 +87,14 @@ func (h *Handler) balances(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bal, err := h.svc.Balance(r.Context(), id)
+	ledgerBal, holds, available, err := h.svc.Balances(r.Context(), id)
 	if err != nil {
 		web.Error(w, r, err)
 		return
 	}
-	web.JSON(w, http.StatusOK, balancesResponse{Ledger: bal.String()})
+	web.JSON(w, http.StatusOK, balancesResponse{
+		Ledger:    ledgerBal.String(),
+		Holds:     holds.String(),
+		Available: available.String(),
+	})
 }
