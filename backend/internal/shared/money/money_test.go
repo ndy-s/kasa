@@ -39,11 +39,124 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestAdd(t *testing.T) {
+	got, err := FromMinor(300, USD).Add(FromMinor(200, USD))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Amount() != 500 {
+		t.Errorf("got %d, want 500", got.Amount())
+	}
+}
+
 func TestAddCurrencyMismatch(t *testing.T) {
 	usd := FromMinor(100, USD)
 	sgd := FromMinor(100, SGD)
 	if _, err := usd.Add(sgd); !errors.Is(err, ErrCurrencyMismatch) {
 		t.Fatalf("got %v, want ErrCurrencyMismatch", err)
+	}
+}
+
+func TestSub(t *testing.T) {
+	got, err := FromMinor(500, USD).Sub(FromMinor(200, USD))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Amount() != 300 {
+		t.Errorf("got %d, want 300", got.Amount())
+	}
+
+	if _, err := FromMinor(500, USD).Sub(FromMinor(200, SGD)); !errors.Is(err, ErrCurrencyMismatch) {
+		t.Fatalf("got %v, want ErrCurrencyMismatch", err)
+	}
+}
+
+func TestNegate(t *testing.T) {
+	if got := FromMinor(500, USD).Negate().Amount(); got != -500 {
+		t.Errorf("got %d, want -500", got)
+	}
+	if got := FromMinor(-500, USD).Negate().Amount(); got != 500 {
+		t.Errorf("got %d, want 500", got)
+	}
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b int64
+		want int
+	}{
+		{"less than", 100, 200, -1},
+		{"greater than", 200, 100, 1},
+		{"equal", 100, 100, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := FromMinor(tt.a, USD).Compare(FromMinor(tt.b, USD))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("got %d, want %d", got, tt.want)
+			}
+		})
+	}
+
+	if _, err := FromMinor(100, USD).Compare(FromMinor(100, SGD)); !errors.Is(err, ErrCurrencyMismatch) {
+		t.Fatalf("got %v, want ErrCurrencyMismatch", err)
+	}
+}
+
+func TestSignPredicates(t *testing.T) {
+	tests := []struct {
+		amount                          int64
+		wantZero, wantNegative, wantPos bool
+	}{
+		{0, true, false, false},
+		{-1, false, true, false},
+		{1, false, false, true},
+	}
+	for _, tt := range tests {
+		m := FromMinor(tt.amount, USD)
+		if got := m.IsZero(); got != tt.wantZero {
+			t.Errorf("IsZero(%d) = %v, want %v", tt.amount, got, tt.wantZero)
+		}
+		if got := m.IsNegative(); got != tt.wantNegative {
+			t.Errorf("IsNegative(%d) = %v, want %v", tt.amount, got, tt.wantNegative)
+		}
+		if got := m.IsPositive(); got != tt.wantPos {
+			t.Errorf("IsPositive(%d) = %v, want %v", tt.amount, got, tt.wantPos)
+		}
+	}
+}
+
+func TestForCode(t *testing.T) {
+	tests := []struct {
+		code string
+		want Currency
+	}{
+		{"IDR", IDR},
+		{"USD", USD},
+		{"SGD", SGD},
+	}
+	for _, tt := range tests {
+		got, err := ForCode(tt.code)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != tt.want {
+			t.Errorf("ForCode(%q) = %+v, want %+v", tt.code, got, tt.want)
+		}
+	}
+
+	if _, err := ForCode("XYZ"); !errors.Is(err, ErrInvalidAmount) {
+		t.Fatalf("got %v, want ErrInvalidAmount for an unknown currency", err)
+	}
+}
+
+func TestCurrency(t *testing.T) {
+	if got := FromMinor(100, SGD).Currency(); got != SGD {
+		t.Errorf("got %+v, want %+v", got, SGD)
 	}
 }
 

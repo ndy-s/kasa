@@ -56,6 +56,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer, cfg Config) http.Ha
 	r.Use(web.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(web.SecurityHeaders)
+	r.Use(web.Metrics)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{cfg.AllowedOrigin},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
@@ -67,6 +68,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer, cfg Config) http.Ha
 	moneyLimit := web.RateLimit(5, 10) // deposit/withdraw/transfer/loans
 
 	r.Get("/healthz", healthz(pool))
+	r.Handle("/metrics", web.MetricsHandler())
 	web.MountDocs(r)
 	guard := web.AuthGuard(issuer)
 	custHandler.Mount(r, guard, authLimit)

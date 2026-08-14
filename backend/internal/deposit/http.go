@@ -35,13 +35,20 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request)  { h.handle(w,
 func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) { h.handle(w, r, false) }
 
 func (h *Handler) handle(w http.ResponseWriter, r *http.Request, isDeposit bool) {
+	op := "deposit"
+	if !isDeposit {
+		op = "withdraw"
+	}
+
 	var req amountRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		web.RecordMoneyOp(op, "failure")
 		web.Error(w, r, apperr.Invalid("invalid request body"))
 		return
 	}
 	amount, err := money.Parse(req.Amount, money.IDR)
 	if err != nil || !amount.IsPositive() {
+		web.RecordMoneyOp(op, "failure")
 		web.Error(w, r, apperr.Invalid("amount must be a positive number"))
 		return
 	}
@@ -55,15 +62,13 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request, isDeposit bool)
 		entryID, err = h.svc.Withdraw(r.Context(), actor, accountID, amount)
 	}
 	if err != nil {
+		web.RecordMoneyOp(op, "failure")
 		web.Error(w, r, toAppError(err))
 		return
 	}
 
-	op := "money.deposit"
-	if !isDeposit {
-		op = "money.withdraw"
-	}
-	web.Audit(r.Context(), op, "actor", actor, "account", accountID, "amount", amount.String(), "entry_id", entryID)
+	web.RecordMoneyOp(op, "success")
+	web.Audit(r.Context(), "money."+op, "actor", actor, "account", accountID, "amount", amount.String(), "entry_id", entryID)
 
 	web.JSON(w, http.StatusCreated, map[string]string{"entry_id": entryID})
 }

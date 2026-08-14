@@ -36,11 +36,13 @@ type transferRequest struct {
 func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 	var req transferRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		web.RecordMoneyOp("transfer", "failure")
 		web.Error(w, r, apperr.Invalid("invalid request body"))
 		return
 	}
 	amount, err := money.Parse(req.Amount, money.IDR)
 	if err != nil || !amount.IsPositive() {
+		web.RecordMoneyOp("transfer", "failure")
 		web.Error(w, r, apperr.Invalid("amount must be a positive number"))
 		return
 	}
@@ -48,6 +50,7 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 	actor, _ := web.CustomerID(r.Context())
 	entryID, err := h.svc.Transfer(r.Context(), actor, req.FromAccountID, req.ToAccountID, amount)
 	if err != nil {
+		web.RecordMoneyOp("transfer", "failure")
 		switch {
 		case errors.Is(err, ErrInsufficientFunds):
 			web.Error(w, r, apperr.New("INSUFFICIENT_FUNDS", http.StatusUnprocessableEntity, "insufficient funds"))
@@ -61,6 +64,7 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	web.RecordMoneyOp("transfer", "success")
 	web.Audit(r.Context(), "money.transfer",
 		"actor", actor, "from", req.FromAccountID, "to", req.ToAccountID, "amount", amount.String(), "entry_id", entryID)
 

@@ -63,21 +63,25 @@ func (h *Handler) originate(w http.ResponseWriter, r *http.Request) {
 	customerID, _ := web.CustomerID(r.Context())
 	var req originateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		web.RecordMoneyOp("loan_disbursement", "failure")
 		web.Error(w, r, apperr.Invalid("invalid request body"))
 		return
 	}
 	if req.TermMonths <= 0 {
+		web.RecordMoneyOp("loan_disbursement", "failure")
 		web.Error(w, r, apperr.Invalid("term_months must be positive"))
 		return
 	}
 	principal, err := money.Parse(req.Principal, money.IDR)
 	if err != nil || !principal.IsPositive() {
+		web.RecordMoneyOp("loan_disbursement", "failure")
 		web.Error(w, r, apperr.Invalid("invalid principal"))
 		return
 	}
 
 	l, err := h.svc.Originate(r.Context(), customerID, req.ProductCode, req.DepositAccountID, principal, req.TermMonths)
 	if err != nil {
+		web.RecordMoneyOp("loan_disbursement", "failure")
 		switch {
 		case errors.Is(err, ErrDepositNotActive):
 			web.Error(w, r, apperr.Invalid("deposit account is not active or not yours"))
@@ -87,6 +91,7 @@ func (h *Handler) originate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	web.RecordMoneyOp("loan_disbursement", "success")
 	web.Audit(r.Context(), "money.loan_disbursement",
 		"actor", customerID, "loan", l.ID, "deposit_account", l.DepositAccountID, "principal", l.PrincipalMinor)
 
@@ -148,6 +153,7 @@ func (h *Handler) repay(w http.ResponseWriter, r *http.Request) {
 	customerID, _ := web.CustomerID(r.Context())
 	entryID, err := h.svc.Repay(r.Context(), customerID, chi.URLParam(r, "id"))
 	if err != nil {
+		web.RecordMoneyOp("loan_repayment", "failure")
 		switch {
 		case errors.Is(err, ErrLoanNotFound):
 			web.Error(w, r, apperr.NotFound("loan not found"))
@@ -163,6 +169,7 @@ func (h *Handler) repay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	web.RecordMoneyOp("loan_repayment", "success")
 	web.Audit(r.Context(), "money.loan_repayment", "actor", customerID, "loan", chi.URLParam(r, "id"), "entry_id", entryID)
 
 	web.JSON(w, http.StatusCreated, map[string]string{"entry_id": entryID})
