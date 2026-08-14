@@ -10,18 +10,24 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/account"
 	"github.com/ndy-s/kasa/backend/internal/customer"
 	"github.com/ndy-s/kasa/backend/internal/deposit"
+	"github.com/ndy-s/kasa/backend/internal/history"
 	"github.com/ndy-s/kasa/backend/internal/ledger"
 	"github.com/ndy-s/kasa/backend/internal/platform/auth"
+	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
 	"github.com/ndy-s/kasa/backend/internal/platform/web"
+	"github.com/ndy-s/kasa/backend/internal/statement"
 	"github.com/ndy-s/kasa/backend/internal/transfer"
 )
 
 func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	ledgerSvc := ledger.NewService()
+	q := postgres.New(pool)
 	custHandler := customer.NewHandler(customer.NewService(customer.NewPgRepository(pool), issuer))
 	accHandler := account.NewHandler(account.NewService(pool))
 	depHandler := deposit.NewHandler(deposit.NewService(pool, ledgerSvc))
 	xferHandler := transfer.NewHandler(transfer.NewService(pool, ledgerSvc))
+	histHandler := history.NewHandler(pool)
+	stmtHandler := statement.NewHandler(statement.NewService(q), q)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -35,6 +41,8 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	accHandler.Mount(r, guard)
 	depHandler.Mount(r, guard)
 	xferHandler.Mount(r, guard, web.Idempotency(pool))
+	histHandler.Mount(r, guard)
+	stmtHandler.Mount(r, guard)
 	return r
 }
 

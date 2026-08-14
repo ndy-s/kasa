@@ -109,7 +109,7 @@ paths:
         "404": { $ref: "#/components/responses/Error" }
   /accounts/{id}/balances:
     get:
-      summary: The account's ledger-derived balance
+      summary: The account's ledger, holds, and available balance
       security:
         - bearerAuth: []
       parameters:
@@ -126,6 +126,78 @@ paths:
                 type: object
                 properties:
                   ledger: { type: string, example: "500.00 USD" }
+                  holds: { type: string, example: "0.00 USD" }
+                  available: { type: string, example: "500.00 USD" }
+        "404": { $ref: "#/components/responses/Error" }
+  /accounts/{id}/transactions:
+    get:
+      summary: List an account's journal entries, most recent first
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          required: false
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EntrySummary" }
+        "404": { $ref: "#/components/responses/Error" }
+  /transactions/{id}/journal:
+    get:
+      summary: A journal entry's debit/credit lines, for the journal inspector
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Journal" }
+        "404": { $ref: "#/components/responses/Error" }
+  /accounts/{id}/statement:
+    get:
+      summary: Generate a statement for a period (opening balance, lines, closing balance)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Statement" }
+        "400": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/Error" }
   /accounts/{id}/deposit:
     post:
@@ -241,6 +313,43 @@ components:
         id: { type: string, format: uuid }
         status: { type: string, enum: [pending, active, frozen, closed] }
         currency: { type: string, example: USD }
+    EntrySummary:
+      type: object
+      properties:
+        entry_id: { type: string, format: uuid }
+        type: { type: string, example: deposit }
+        description: { type: string }
+        booking_date: { type: string, format: date }
+    JournalLine:
+      type: object
+      properties:
+        account_id: { type: string, format: uuid }
+        direction: { type: string, enum: [debit, credit] }
+        amount: { type: string, example: "100.00 USD" }
+    Journal:
+      type: object
+      properties:
+        entry_id: { type: string, format: uuid }
+        type: { type: string, example: deposit }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/JournalLine" }
+        balanced: { type: boolean }
+    StatementLine:
+      type: object
+      properties:
+        booking_date: { type: string, format: date }
+        type: { type: string, example: deposit }
+        direction: { type: string, enum: [debit, credit] }
+        amount: { type: string, example: "100.00 USD" }
+    Statement:
+      type: object
+      properties:
+        opening: { type: string, example: "500.00 USD" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/StatementLine" }
+        closing: { type: string, example: "600.00 USD" }
     Error:
       type: object
       properties:
