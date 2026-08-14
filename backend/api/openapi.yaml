@@ -333,6 +333,34 @@ paths:
                 type: object
                 properties:
                   now: { type: string, format: date }
+  /education/scenarios/{name}/run:
+    post:
+      summary: Run a scripted scenario against real service calls and narrate each step
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema: { type: string, enum: [insufficient-funds, reversal] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenario: { type: string }
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        action: { type: string }
+                        result: { type: string }
+                        detail: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:

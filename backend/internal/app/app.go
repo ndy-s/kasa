@@ -11,6 +11,7 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/account"
 	"github.com/ndy-s/kasa/backend/internal/customer"
 	"github.com/ndy-s/kasa/backend/internal/deposit"
+	"github.com/ndy-s/kasa/backend/internal/education"
 	"github.com/ndy-s/kasa/backend/internal/history"
 	"github.com/ndy-s/kasa/backend/internal/interest"
 	"github.com/ndy-s/kasa/backend/internal/ledger"
@@ -26,11 +27,14 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	ledgerSvc := ledger.NewService()
 	q := postgres.New(pool)
 	custHandler := customer.NewHandler(customer.NewService(customer.NewPgRepository(pool), issuer))
-	accHandler := account.NewHandler(account.NewService(pool))
-	depHandler := deposit.NewHandler(deposit.NewService(pool, ledgerSvc))
+	accSvc := account.NewService(pool)
+	depSvc := deposit.NewService(pool, ledgerSvc)
+	accHandler := account.NewHandler(accSvc)
+	depHandler := deposit.NewHandler(depSvc)
 	xferHandler := transfer.NewHandler(transfer.NewService(pool, ledgerSvc))
 	histHandler := history.NewHandler(pool)
 	stmtHandler := statement.NewHandler(statement.NewService(q), q)
+	eduHandler := education.NewHandler(pool, accSvc, depSvc, ledgerSvc)
 
 	fakeClock := clock.NewFake(time.Now())
 	intHandler := interest.NewAdminHandler(interest.NewService(pool, ledgerSvc), fakeClock)
@@ -39,6 +43,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(web.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(web.CORS)
 
 	r.Get("/healthz", healthz(pool))
 	web.MountDocs(r)
@@ -50,6 +55,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	histHandler.Mount(r, guard)
 	stmtHandler.Mount(r, guard)
 	intHandler.Mount(r, guard)
+	eduHandler.Mount(r, guard)
 	return r
 }
 
