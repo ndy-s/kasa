@@ -38,7 +38,7 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		web.Error(w, r, apperr.Invalid("invalid request body"))
 		return
 	}
-	amount, err := money.Parse(req.Amount, money.USD)
+	amount, err := money.Parse(req.Amount, money.IDR)
 	if err != nil {
 		web.Error(w, r, apperr.Invalid("invalid amount"))
 		return

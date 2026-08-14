@@ -52,7 +52,7 @@ func main() {
 		log.Fatal("cash account: ", err)
 	}
 	lines, err := ledger.LinesFor(ledger.Deposit, ledger.PostingParams{
-		Amount:        money.FromMinor(50000, money.USD),
+		Amount:        money.FromMinor(50000, money.IDR),
 		CashAccountID: uuid.UUID(cash.ID.Bytes).String(),
 		ToAccountID:   acc.LedgerAccountID,
 	})

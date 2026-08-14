@@ -61,13 +61,13 @@ func (h *Handler) insufficientFunds(w http.ResponseWriter, r *http.Request, cust
 	}
 	steps = append(steps, step{"open account", "ok", "a fresh savings account is opened"})
 
-	if _, err := h.deposits.Deposit(r.Context(), customerID, acc.ID, money.FromMinor(5000, money.USD)); err != nil {
+	if _, err := h.deposits.Deposit(r.Context(), customerID, acc.ID, money.FromMinor(5000, money.IDR)); err != nil {
 		web.Error(w, r, err)
 		return
 	}
 	steps = append(steps, step{"deposit 50.00", "ok", "the account now holds 50.00"})
 
-	_, err = h.deposits.Withdraw(r.Context(), customerID, acc.ID, money.FromMinor(10000, money.USD))
+	_, err = h.deposits.Withdraw(r.Context(), customerID, acc.ID, money.FromMinor(10000, money.IDR))
 	if errors.Is(err, deposit.ErrInsufficientFunds) {
 		steps = append(steps, step{"withdraw 100.00", "rejected",
 			"the withdrawal is refused because available funds are only 50.00; the ledger is untouched"})
@@ -88,7 +88,7 @@ func (h *Handler) reversal(w http.ResponseWriter, r *http.Request, customerID st
 	}
 	steps = append(steps, step{"open account", "ok", "a fresh savings account is opened"})
 
-	entryID, err := h.deposits.Deposit(r.Context(), customerID, acc.ID, money.FromMinor(5000, money.USD))
+	entryID, err := h.deposits.Deposit(r.Context(), customerID, acc.ID, money.FromMinor(5000, money.IDR))
 	if err != nil {
 		web.Error(w, r, err)
 		return

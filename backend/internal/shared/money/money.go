@@ -13,6 +13,7 @@ type Currency struct {
 }
 
 var (
+	IDR = Currency{Code: "IDR", Exponent: 2}
 	USD = Currency{Code: "USD", Exponent: 2}
 	SGD = Currency{Code: "SGD", Exponent: 2}
 )
@@ -35,6 +36,8 @@ func FromMinor(amount int64, c Currency) Money {
 // ForCode returns the Currency for a currency code.
 func ForCode(code string) (Currency, error) {
 	switch code {
+	case "IDR":
+		return IDR, nil
 	case "USD":
 		return USD, nil
 	case "SGD":

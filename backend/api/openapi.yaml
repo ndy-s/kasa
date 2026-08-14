@@ -125,9 +125,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  ledger: { type: string, example: "500.00 USD" }
-                  holds: { type: string, example: "0.00 USD" }
-                  available: { type: string, example: "500.00 USD" }
+                  ledger: { type: string, example: "500.00 IDR" }
+                  holds: { type: string, example: "0.00 IDR" }
+                  available: { type: string, example: "500.00 IDR" }
         "404": { $ref: "#/components/responses/Error" }
   /accounts/{id}/transactions:
     get:
@@ -380,7 +380,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         status: { type: string, enum: [pending, active, frozen, closed] }
-        currency: { type: string, example: USD }
+        currency: { type: string, example: IDR }
     EntrySummary:
       type: object
       properties:
@@ -393,7 +393,7 @@ components:
       properties:
         account_id: { type: string, format: uuid }
         direction: { type: string, enum: [debit, credit] }
-        amount: { type: string, example: "100.00 USD" }
+        amount: { type: string, example: "100.00 IDR" }
     Journal:
       type: object
       properties:
@@ -409,15 +409,15 @@ components:
         booking_date: { type: string, format: date }
         type: { type: string, example: deposit }
         direction: { type: string, enum: [debit, credit] }
-        amount: { type: string, example: "100.00 USD" }
+        amount: { type: string, example: "100.00 IDR" }
     Statement:
       type: object
       properties:
-        opening: { type: string, example: "500.00 USD" }
+        opening: { type: string, example: "500.00 IDR" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/StatementLine" }
-        closing: { type: string, example: "600.00 USD" }
+        closing: { type: string, example: "600.00 IDR" }
     Error:
       type: object
       properties:
