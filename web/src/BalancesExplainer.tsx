@@ -13,7 +13,7 @@ export function BalancesExplainer({ accountId, token }: { accountId: string; tok
 
   if (!balances) return <p>Loading…</p>;
 
-  const hasHold = balances.holds !== "0.00 USD";
+  const hasHold = balances.holds !== "0.00 IDR";
 
   return (
     <div>

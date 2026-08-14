@@ -7,6 +7,8 @@ const definitions: Record<string, string> = {
   "Journal entry": "A balanced set of debit and credit lines recorded together. Debits always equal credits.",
   Reversal: "A new entry with debits and credits swapped, compensating a prior entry without deleting it.",
   Idempotency: "A retried request with the same key returns the original result instead of repeating the action.",
+  Amortization:
+    "Splitting a loan into equal payments over time, each one part interest on the remaining balance and part principal.",
 };
 
 export function Glossary({ term, children }: { term: string; children: ReactNode }) {

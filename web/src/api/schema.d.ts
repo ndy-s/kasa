@@ -287,11 +287,11 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example 500.00 USD */
+                            /** @example 500.00 IDR */
                             ledger?: string;
-                            /** @example 0.00 USD */
+                            /** @example 0.00 IDR */
                             holds?: string;
-                            /** @example 500.00 USD */
+                            /** @example 500.00 IDR */
                             available?: string;
                         };
                     };
@@ -676,6 +676,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/loans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Originate a loan, disbursing the principal into a deposit account */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example PL */
+                        product_code: string;
+                        /** Format: uuid */
+                        deposit_account_id: string;
+                        /** @example 12000000.00 */
+                        principal: string;
+                        /** @example 12 */
+                        term_months: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Loan"];
+                    };
+                };
+                400: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a loan by id */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Loan"];
+                    };
+                };
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loans/{id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The loan's full amortization schedule */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Installment"][];
+                    };
+                };
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loans/{id}/repay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pay the next due installment out of the loan's deposit account */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            entry_id?: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                422: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/education/scenarios/{name}/run": {
         parameters: {
             query?: never;
@@ -740,7 +911,7 @@ export interface components {
             id?: string;
             /** @enum {string} */
             status?: "pending" | "active" | "frozen" | "closed";
-            /** @example USD */
+            /** @example IDR */
             currency?: string;
         };
         EntrySummary: {
@@ -757,7 +928,7 @@ export interface components {
             account_id?: string;
             /** @enum {string} */
             direction?: "debit" | "credit";
-            /** @example 100.00 USD */
+            /** @example 100.00 IDR */
             amount?: string;
         };
         Journal: {
@@ -775,15 +946,46 @@ export interface components {
             type?: string;
             /** @enum {string} */
             direction?: "debit" | "credit";
-            /** @example 100.00 USD */
+            /** @example 100.00 IDR */
             amount?: string;
         };
         Statement: {
-            /** @example 500.00 USD */
+            /** @example 500.00 IDR */
             opening?: string;
             lines?: components["schemas"]["StatementLine"][];
-            /** @example 600.00 USD */
+            /** @example 600.00 IDR */
             closing?: string;
+        };
+        Loan: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            deposit_account_id?: string;
+            /** @example 12000000.00 IDR */
+            principal?: string;
+            /** @example 12 */
+            term_months?: number;
+            /** @example 1800 */
+            interest_rate_bps?: number;
+            /** @enum {string} */
+            status?: "active" | "closed";
+            /** Format: date */
+            disbursed_at?: string;
+        };
+        Installment: {
+            number?: number;
+            /** Format: date */
+            due_date?: string;
+            /** @example 922625.66 IDR */
+            principal?: string;
+            /** @example 177534.25 IDR */
+            interest?: string;
+            /** @example 1100159.91 IDR */
+            total?: string;
+            /** @example 11077374.34 IDR */
+            balance?: string;
+            /** @enum {string} */
+            status?: "due" | "paid";
         };
         Error: {
             code?: string;

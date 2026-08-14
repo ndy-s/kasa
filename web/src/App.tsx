@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "./api/client";
 import { JournalInspector } from "./JournalInspector";
 import { BalancesExplainer } from "./BalancesExplainer";
+import { LoanView } from "./LoanView";
 import "./App.css";
 
 function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
@@ -66,6 +67,8 @@ function Explorer({ token }: { token: string }) {
         </label>
       </div>
       {entryId && <JournalInspector entryId={entryId} token={token} />}
+      <hr />
+      <LoanView token={token} />
     </div>
   );
 }
