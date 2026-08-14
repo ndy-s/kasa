@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,8 +12,10 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/customer"
 	"github.com/ndy-s/kasa/backend/internal/deposit"
 	"github.com/ndy-s/kasa/backend/internal/history"
+	"github.com/ndy-s/kasa/backend/internal/interest"
 	"github.com/ndy-s/kasa/backend/internal/ledger"
 	"github.com/ndy-s/kasa/backend/internal/platform/auth"
+	"github.com/ndy-s/kasa/backend/internal/platform/clock"
 	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
 	"github.com/ndy-s/kasa/backend/internal/platform/web"
 	"github.com/ndy-s/kasa/backend/internal/statement"
@@ -29,6 +32,9 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	histHandler := history.NewHandler(pool)
 	stmtHandler := statement.NewHandler(statement.NewService(q), q)
 
+	fakeClock := clock.NewFake(time.Now())
+	intHandler := interest.NewAdminHandler(interest.NewService(pool, ledgerSvc), fakeClock)
+
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(web.Logger)
@@ -43,6 +49,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	xferHandler.Mount(r, guard, web.Idempotency(pool))
 	histHandler.Mount(r, guard)
 	stmtHandler.Mount(r, guard)
+	intHandler.Mount(r, guard)
 	return r
 }
 

@@ -293,6 +293,46 @@ paths:
         "400": { $ref: "#/components/responses/Error" }
         "409": { $ref: "#/components/responses/Error" }
         "422": { $ref: "#/components/responses/Error" }
+  /admin/clock/advance:
+    post:
+      summary: Fast-forward the time machine, running interest accrual for each day
+      description: Admin/learn-mode only. In production, accrual runs on a cron rather than being triggered by a client.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [days]
+              properties:
+                days: { type: integer, minimum: 1, example: 30 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  now: { type: string, format: date }
+        "400": { $ref: "#/components/responses/Error" }
+  /admin/interest/capitalize:
+    post:
+      summary: Capitalize accrued interest for every active deposit account on demand
+      description: Admin/learn-mode only. In production, capitalization runs on a monthly schedule.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  now: { type: string, format: date }
 components:
   securitySchemes:
     bearerAuth:
