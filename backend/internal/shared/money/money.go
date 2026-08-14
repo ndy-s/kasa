@@ -175,3 +175,24 @@ func (m Money) ApplyRate(bps int64) Money {
 	}
 	return Money{amount: q, currency: m.currency}
 }
+
+// InterestForDays returns simple interest for a number of days at an annual rate in basis points,
+// using banker's rounding.
+func (m Money) InterestForDays(annualBps int64, days int) Money {
+	num := m.amount * annualBps * int64(days)
+	const den = int64(10000 * 365)
+	q := num / den
+	r := num % den
+	if r < 0 {
+		r = -r
+	}
+	const half = den / 2
+	if r > half || (r == half && q%2 != 0) {
+		if num < 0 {
+			q--
+		} else {
+			q++
+		}
+	}
+	return Money{amount: q, currency: m.currency}
+}

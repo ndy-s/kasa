@@ -109,3 +109,28 @@ func TestApplyRate(t *testing.T) {
 		})
 	}
 }
+
+func TestInterestForDays(t *testing.T) {
+	tests := []struct {
+		name      string
+		amount    int64
+		annualBps int64
+		days      int
+		want      int64
+	}{
+		{"1000.00 at 1.50% for 1 day", 100000, 150, 1, 4},
+		{"1000.00 at 1.50% for a full year equals exactly the annual rate", 100000, 150, 365, 1500},
+		{"exact half, odd quotient rounds up (banker's rounding)", 5475000, 1, 1, 2},
+		{"exact half, even quotient stays put (banker's rounding)", 9125000, 1, 1, 2},
+		{"negative balance", -100000, 150, 1, -4},
+		{"zero amount", 0, 150, 1, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FromMinor(tt.amount, USD).InterestForDays(tt.annualBps, tt.days)
+			if got.Amount() != tt.want {
+				t.Errorf("got %d, want %d", got.Amount(), tt.want)
+			}
+		})
+	}
+}
