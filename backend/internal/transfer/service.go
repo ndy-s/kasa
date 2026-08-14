@@ -51,7 +51,8 @@ func (s *Service) Transfer(ctx context.Context, actor, fromID, toID string, amou
 	q := postgres.New(tc.Tx)
 
 	// lock both rows in a deterministic order to avoid deadlock against a
-	// concurrent transfer running in the opposite direction
+	// concurrent transfer running in the opposite direction, keeping the row
+	// from this single locking pass instead of re-querying each account again
 	ordered := []string{fromID, toID}
 	sort.Strings(ordered)
 	locked := make(map[string]postgres.GetAccountForUpdateRow, 2)
