@@ -93,6 +93,31 @@ type JournalLine struct {
 	Currency        string
 }
 
+type Loan struct {
+	ID               pgtype.UUID
+	CustomerID       pgtype.UUID
+	DepositAccountID pgtype.UUID
+	PrincipalMinor   int64
+	TermMonths       int32
+	InterestRateBps  int32
+	Currency         string
+	Status           string
+	DisbursedAt      pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+}
+
+type LoanInstallment struct {
+	ID             pgtype.UUID
+	LoanID         pgtype.UUID
+	InstallmentNo  int32
+	DueDate        pgtype.Date
+	PrincipalMinor int64
+	InterestMinor  int64
+	BalanceMinor   int64
+	Status         string
+	PaidAt         pgtype.Timestamptz
+}
+
 type Ping struct {
 	ID int32
 }

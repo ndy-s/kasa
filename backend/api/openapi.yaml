@@ -333,6 +333,88 @@ paths:
                 type: object
                 properties:
                   now: { type: string, format: date }
+  /loans:
+    post:
+      summary: Originate a loan, disbursing the principal into a deposit account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_code, deposit_account_id, principal, term_months]
+              properties:
+                product_code: { type: string, example: PL }
+                deposit_account_id: { type: string, format: uuid }
+                principal: { type: string, example: "12000000.00" }
+                term_months: { type: integer, minimum: 1, example: 12 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Loan" }
+        "400": { $ref: "#/components/responses/Error" }
+  /loans/{id}:
+    get:
+      summary: Get a loan by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Loan" }
+        "404": { $ref: "#/components/responses/Error" }
+  /loans/{id}/schedule:
+    get:
+      summary: The loan's full amortization schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Installment" }
+        "404": { $ref: "#/components/responses/Error" }
+  /loans/{id}/repay:
+    post:
+      summary: Pay the next due installment out of the loan's deposit account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entry_id: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
   /education/scenarios/{name}/run:
     post:
       summary: Run a scripted scenario against real service calls and narrate each step
@@ -418,6 +500,26 @@ components:
           type: array
           items: { $ref: "#/components/schemas/StatementLine" }
         closing: { type: string, example: "600.00 IDR" }
+    Loan:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        deposit_account_id: { type: string, format: uuid }
+        principal: { type: string, example: "12000000.00 IDR" }
+        term_months: { type: integer, example: 12 }
+        interest_rate_bps: { type: integer, example: 1800 }
+        status: { type: string, enum: [active, closed] }
+        disbursed_at: { type: string, format: date }
+    Installment:
+      type: object
+      properties:
+        number: { type: integer }
+        due_date: { type: string, format: date }
+        principal: { type: string, example: "922625.66 IDR" }
+        interest: { type: string, example: "177534.25 IDR" }
+        total: { type: string, example: "1100159.91 IDR" }
+        balance: { type: string, example: "11077374.34 IDR" }
+        status: { type: string, enum: [due, paid] }
     Error:
       type: object
       properties:

@@ -15,6 +15,7 @@ import (
 	"github.com/ndy-s/kasa/backend/internal/history"
 	"github.com/ndy-s/kasa/backend/internal/interest"
 	"github.com/ndy-s/kasa/backend/internal/ledger"
+	"github.com/ndy-s/kasa/backend/internal/loan"
 	"github.com/ndy-s/kasa/backend/internal/platform/auth"
 	"github.com/ndy-s/kasa/backend/internal/platform/clock"
 	"github.com/ndy-s/kasa/backend/internal/platform/postgres"
@@ -35,6 +36,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	histHandler := history.NewHandler(pool)
 	stmtHandler := statement.NewHandler(statement.NewService(q), q)
 	eduHandler := education.NewHandler(pool, accSvc, depSvc, ledgerSvc)
+	loanHandler := loan.NewHandler(loan.NewService(pool, ledgerSvc))
 
 	fakeClock := clock.NewFake(time.Now())
 	intHandler := interest.NewAdminHandler(interest.NewService(pool, ledgerSvc), fakeClock)
@@ -56,6 +58,7 @@ func NewRouter(pool *pgxpool.Pool, issuer *auth.TokenIssuer) http.Handler {
 	stmtHandler.Mount(r, guard)
 	intHandler.Mount(r, guard)
 	eduHandler.Mount(r, guard)
+	loanHandler.Mount(r, guard)
 	return r
 }
 

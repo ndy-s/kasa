@@ -30,6 +30,8 @@ const (
 	Withdrawal     TransactionType = "withdrawal"
 	Transfer       TransactionType = "transfer"
 	InterestCredit TransactionType = "interest_credit"
+	Disbursement   TransactionType = "disbursement"
+	Repayment      TransactionType = "repayment"
 )
 
 type LedgerAccount struct {
