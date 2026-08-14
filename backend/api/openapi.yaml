@@ -187,6 +187,40 @@ paths:
                   entry_id: { type: string }
         "400": { $ref: "#/components/responses/Error" }
         "422": { $ref: "#/components/responses/Error" }
+  /transfers:
+    post:
+      summary: Transfer funds between two accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string }
+          description: A client-generated key. A retry with the same key and body replays the original response; the same key with a different body returns 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from_account_id, to_account_id, amount]
+              properties:
+                from_account_id: { type: string, format: uuid }
+                to_account_id: { type: string, format: uuid }
+                amount: { type: string, example: "25.00" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entry_id: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:
