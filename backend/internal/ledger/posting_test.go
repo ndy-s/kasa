@@ -42,7 +42,7 @@ func TestLedgerAlwaysBalances(t *testing.T) {
 	rng := rand.New(rand.NewSource(1))
 
 	for i := 0; i < 200; i++ {
-		amount := money.FromMinor(rng.Int63n(100000)+1, money.USD)
+		amount := money.FromMinor(rng.Int63n(100000)+1, money.IDR)
 		lines, err := ledger.LinesFor(ledger.Deposit, ledger.PostingParams{
 			Amount: amount, CashAccountID: cashID, ToAccountID: depID,
 		})

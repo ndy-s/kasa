@@ -102,7 +102,7 @@ func TestAccountBalanceIsDerivedFromTheLedger(t *testing.T) {
 	}
 
 	lines, err := ledger.LinesFor(ledger.Deposit, ledger.PostingParams{
-		Amount:        money.FromMinor(50000, money.USD),
+		Amount:        money.FromMinor(50000, money.IDR),
 		CashAccountID: uuid.UUID(cash.ID.Bytes).String(),
 		ToAccountID:   uuid.UUID(row.LedgerAccountID.Bytes).String(),
 	})
@@ -132,7 +132,7 @@ func TestAccountBalanceIsDerivedFromTheLedger(t *testing.T) {
 		Ledger string `json:"ledger"`
 	}
 	decode(t, resp, &balances)
-	if balances.Ledger != "500.00 USD" {
-		t.Fatalf("ledger balance = %q, want %q", balances.Ledger, "500.00 USD")
+	if balances.Ledger != "500.00 IDR" {
+		t.Fatalf("ledger balance = %q, want %q", balances.Ledger, "500.00 IDR")
 	}
 }

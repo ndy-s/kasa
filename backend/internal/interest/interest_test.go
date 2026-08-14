@@ -40,7 +40,7 @@ func TestAccrueThenCapitalize(t *testing.T) {
 
 	ledgerSvc := ledger.NewService()
 	depSvc := deposit.NewService(pool, ledgerSvc)
-	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(100000, money.USD)); err != nil {
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(100000, money.IDR)); err != nil {
 		t.Fatalf("deposit: %v", err)
 	}
 

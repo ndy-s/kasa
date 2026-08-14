@@ -40,7 +40,7 @@ func TestConcurrentWithdrawalsNeverOverdraw(t *testing.T) {
 	}
 
 	depSvc := deposit.NewService(pool, ledger.NewService())
-	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(10000, money.USD)); err != nil {
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(10000, money.IDR)); err != nil {
 		t.Fatalf("deposit: %v", err)
 	}
 
@@ -52,7 +52,7 @@ func TestConcurrentWithdrawalsNeverOverdraw(t *testing.T) {
 	for i := 0; i < attempts; i++ {
 		go func() {
 			defer wg.Done()
-			if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(each, money.USD)); err == nil {
+			if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(each, money.IDR)); err == nil {
 				atomic.AddInt64(&succeeded, 1)
 			}
 		}()

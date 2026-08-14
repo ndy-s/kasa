@@ -29,7 +29,7 @@ func TestReversalNetsToZero(t *testing.T) {
 	svc := ledger.NewService()
 
 	lines, err := ledger.LinesFor(ledger.Deposit, ledger.PostingParams{
-		Amount: money.FromMinor(10000, money.USD), CashAccountID: cashID, ToAccountID: depID,
+		Amount: money.FromMinor(10000, money.IDR), CashAccountID: cashID, ToAccountID: depID,
 	})
 	if err != nil {
 		t.Fatalf("rule: %v", err)

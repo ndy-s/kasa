@@ -39,11 +39,11 @@ func TestWithdrawRejectsOverdraft(t *testing.T) {
 	}
 
 	depSvc := deposit.NewService(pool, ledger.NewService())
-	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(10000, money.USD)); err != nil {
+	if _, err := depSvc.Deposit(ctx, cust.ID, acc.ID, money.FromMinor(10000, money.IDR)); err != nil {
 		t.Fatalf("deposit: %v", err)
 	}
 
-	if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(15000, money.USD)); !errors.Is(err, deposit.ErrInsufficientFunds) {
+	if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(15000, money.IDR)); !errors.Is(err, deposit.ErrInsufficientFunds) {
 		t.Fatalf("withdraw over balance: got %v, want ErrInsufficientFunds", err)
 	}
 
@@ -52,7 +52,7 @@ func TestWithdrawRejectsOverdraft(t *testing.T) {
 		t.Fatalf("balance after rejected withdrawal = %d, want 10000 (nothing posted)", balance)
 	}
 
-	if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(4000, money.USD)); err != nil {
+	if _, err := depSvc.Withdraw(ctx, cust.ID, acc.ID, money.FromMinor(4000, money.IDR)); err != nil {
 		t.Fatalf("valid withdraw: %v", err)
 	}
 	if balance := balanceOf(t, ctx, pool, acc.LedgerAccountID); balance != 6000 {
