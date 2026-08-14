@@ -44,6 +44,34 @@ type Customer struct {
 	UpdatedAt pgtype.Timestamptz
 }
 
+type Hold struct {
+	ID          pgtype.UUID
+	AccountID   pgtype.UUID
+	AmountMinor int64
+	Currency    string
+	Status      string
+	ExpiresAt   pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+}
+
+type IdempotencyKey struct {
+	Key          string
+	RequestHash  string
+	ResponseBody []byte
+	StatusCode   int32
+	CreatedAt    pgtype.Timestamptz
+}
+
+type InterestAccrual struct {
+	ID          pgtype.UUID
+	AccountID   pgtype.UUID
+	AccrualDate pgtype.Date
+	AmountMinor int64
+	Currency    string
+	Capitalized bool
+	CreatedAt   pgtype.Timestamptz
+}
+
 type JournalEntry struct {
 	ID              pgtype.UUID
 	TransactionType string
