@@ -26,9 +26,10 @@ const (
 type TransactionType string
 
 const (
-	Deposit    TransactionType = "deposit"
-	Withdrawal TransactionType = "withdrawal"
-	Transfer   TransactionType = "transfer"
+	Deposit        TransactionType = "deposit"
+	Withdrawal     TransactionType = "withdrawal"
+	Transfer       TransactionType = "transfer"
+	InterestCredit TransactionType = "interest_credit"
 )
 
 type LedgerAccount struct {
